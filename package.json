@@ -1,0 +1,38 @@
+{
+  "name": "unified-notifer",
+  "version": "1.0.0",
+  "description": "A unified (wechat, webhook, mobile text msg) notifier",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start-win": "set NODE_ENV='dev'"
+  },
+  "author": "pengy",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/appetizerio/unified-notifier"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "body-parser": "^1.18.3",
+    "body-parser-xml": "^1.1.0",
+    "debug": "^3.1.0",
+    "dom-parser": "0.1.6",
+    "express": "^4.16.4",
+    "file-stream-rotator": "^0.4.1",
+    "js-shortid": "^0.1.1",
+    "mailgun-js": "^0.21.0",
+    "moment": "^2.22.2",
+    "mongodb": "^3.1.8",
+    "mongoose": "^5.3.10",
+    "morgan": "^1.9.1",
+    "node-webhooks": "^1.4.0",
+    "puppeteer": "^1.17.0",
+    "sha1": "^1.1.1",
+    "wechat": "^2.1.0",
+    "wechat-api": "^1.35.1",
+    "xml2js": "latest"
+  }
+}

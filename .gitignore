@@ -1,3 +1,8 @@
+# Ignore files
+app_backup.js
+creds.js
+.idea/
+
 # Logs
 logs
 *.log
@@ -36,6 +41,9 @@ build/Release
 node_modules/
 jspm_packages/
 
+# Screen shots
+screenshots/
+
 # TypeScript v1 declaration files
 typings/
 
@@ -59,3 +67,5 @@ typings/
 
 # next.js build output
 .next
+
+
