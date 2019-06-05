@@ -3,10 +3,9 @@ Backend of Argus
 
 ## API
 http://localhost:8088
-### user
-/user/add post
-{name: "yaopeng",
-mail:"yaopeng@mail.com",
-password:"yaopengpw"
+### commodity
+**Post** /commodity/search
+{query: "d7200",
+website:"taobao"
 }
 
