@@ -36,6 +36,63 @@ fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);
 process.stdout.write = accessLogStream.write.bind(accessLogStream); // redirect console.log(stdout) to process.stderr
 app.use(morgan('short', {stream: accessLogStream}));
 
+async function run(query) {
+    const browser = await puppeteer.launch({headless: false})
+    let page = await browser.newPage()
+    await page.goto('https://s.taobao.com/search?q='+query)
+
+    const switchbutton_selector = "#J_Quick2Static"
+    const username_selector = "#TPL_username_1"
+    const password_selector = "#TPL_password_1"
+    const loginbutton_selector = "#J_SubmitStatic"
+
+    await page.click(switchbutton_selector)
+    await page.click(username_selector)
+    await page.keyboard.type(CREDS.username,{delay: Math.random()*50+100})
+    await page.click(password_selector)
+    await page.keyboard.type(CREDS.password, {delay:Math.random()*50+100})
+    page = await mouse_slide(page)
+
+    await page.click(loginbutton_selector)
+    await save_cookie(page)
+    await page.waitForNavigation()
+
+    //await page.screenshot({ path: 'screenshots/query.png' });
+    //browser.close();
+}
+
+async function mouse_slide(page){
+    try{
+        await page.hover("#nc_1_n1z")
+        await page.mouse.down()
+        await page.mouse.move(2000,0,{"delay":Math.random()*1000+1000})
+        await page.mouse.up()
+        console.log("slide success");
+        return page
+    }
+    catch (err){
+        console.log("slide error")
+        return page
+    }
+}
+
+async function save_cookie(page){
+    try{
+        cookie_list = page.cookies()
+        var cookies = ''
+        for (cookie in cookie_list){
+            str_cookie = '{0}={1};'
+            str_cookie = str_cookie.format(cookie.get('name'), cookie.get('value'))
+            cookies += str_cookie
+        }
+        console.log("cookie success")
+        print(cookies)
+    }
+    catch (err){
+        console.log("cookie error")
+        return page
+    }
+
 app.post('/commodity/search',jsonParser, (req, res) => {
     const query  = req.body.query
     const website = req.body.website
