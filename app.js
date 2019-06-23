@@ -7,7 +7,7 @@
 // 将商品移除listen列表: 移除hook item
 // 查询某商品详细信息(以便查看历史价格走势):返回commodity item
 const express = require('express');
-const request = require("request");
+const format = require('string-format')
 const puppeteer = require('puppeteer');
 const CREDS = require("./creds");
 const app = express();
@@ -25,92 +25,190 @@ const fs = require('fs');
 const logDirectory = __dirname + '/log';
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-const hooksSchema = new Schema(config.mongoHooksSchema, {collection: 'hooks'});
 const commoditySchema = new Schema(config.mongoCommoditySchema, {collection: 'commodities'});
 const commodityModel = mongoose.model('commodities', commoditySchema);
-const hooksModel = mongoose.model('hooks', hooksSchema);
 const accessLogStream = require('file-stream-rotator').getStream(config.logAddress);
-
 
 fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);
 process.stdout.write = accessLogStream.write.bind(accessLogStream); // redirect console.log(stdout) to process.stderr
 app.use(morgan('short', {stream: accessLogStream}));
 
-async function run(query) {
+Date.prototype.Format = function(fmt) { //author: meizz
+    var o = {
+        "M+": this.getMonth() + 1, //月份
+        "d+": this.getDate(), //日
+        "h+": this.getHours(), //小时
+        "m+": this.getMinutes(), //分
+        "s+": this.getSeconds(), //秒
+        "S": this.getMilliseconds() //毫秒
+    };
+    if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+    for (var k in o)
+        if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    return fmt;
+}
+
+let amazonPage = get_website_page("https://www.amazon.cn/")
+let jdPage = get_website_page("https://www.jd.com/")
+async function get_website_page(url){
     const browser = await puppeteer.launch({headless: false})
     let page = await browser.newPage()
-    await page.goto('https://s.taobao.com/search?q='+query)
-
-    const switchbutton_selector = "#J_Quick2Static"
-    const username_selector = "#TPL_username_1"
-    const password_selector = "#TPL_password_1"
-    const loginbutton_selector = "#J_SubmitStatic"
-
-    await page.click(switchbutton_selector)
-    await page.click(username_selector)
-    await page.keyboard.type(CREDS.username,{delay: Math.random()*50+100})
-    await page.click(password_selector)
-    await page.keyboard.type(CREDS.password, {delay:Math.random()*50+100})
-    page = await mouse_slide(page)
-
-    await page.click(loginbutton_selector)
-    await save_cookie(page)
-    await page.waitForNavigation()
-
-    //await page.screenshot({ path: 'screenshots/query.png' });
-    //browser.close();
+    //let Page = await browser.newPage()
+    await page.goto(url)
+    //await amazonPage.waitForNavigation()
+    return page
 }
 
-async function mouse_slide(page){
-    try{
-        await page.hover("#nc_1_n1z")
-        await page.mouse.down()
-        await page.mouse.move(2000,0,{"delay":Math.random()*1000+1000})
-        await page.mouse.up()
-        console.log("slide success");
-        return page
-    }
-    catch (err){
-        console.log("slide error")
-        return page
-    }
-}
+async function amazon_search(query, num){
+    let page = await amazonPage
 
-async function save_cookie(page){
-    try{
-        cookie_list = page.cookies()
-        var cookies = ''
-        for (cookie in cookie_list){
-            str_cookie = '{0}={1};'
-            str_cookie = str_cookie.format(cookie.get('name'), cookie.get('value'))
-            cookies += str_cookie
+    let searchSelector = "#twotabsearchtextbox"
+    await page.click(searchSelector)
+
+    await page.keyboard.down('ControlLeft')
+    await page.keyboard.down('a')
+    await page.keyboard.press('Backspace')
+    await page.keyboard.up('a')
+    await page.keyboard.up('ControlLeft')
+
+    await page.keyboard.type(query)
+    let querySelector = "#nav-search > form > div.nav-right > div > input"
+    const navigationPromise = page.waitForNavigation();
+    await page.click(querySelector)
+    await navigationPromise
+
+    let item_selector_temp = "#search > div.sg-row > div.sg-col-20-of-24.sg-col-28-of-32.sg-col-16-of-20.sg-col.s-right-column.sg-col-32-of-36.sg-col-8-of-12.sg-col-12-of-16.sg-col-24-of-28 > div > span:nth-child(4) > div.s-result-list.s-search-results.sg-row > div:nth-child({}) > div > div > div > div:nth-child(2)"
+    let i = 1
+    let itemList = []
+    for (i; i <= num; i++) {
+        let item_selector = format(item_selector_temp, i)
+        try {
+            const imageurl = await page.$eval(item_selector + " > div:nth-child(1) > div > div > span > a > div > img", el => el.src)
+            const name = await page.$eval(item_selector + " > div:nth-child(2) > div > div > h2 > a > span", el => el.innerHTML)
+            const price_int = await page.$eval(item_selector + " > div:nth-child(3) > div > div.a-section.a-spacing-none.a-spacing-top-small > div > div > a > span > span:nth-child(2) > span.a-price-whole", el => el.innerHTML)
+            const price_double = await page.$eval(item_selector + " > div:nth-child(3) > div > div.a-section.a-spacing-none.a-spacing-top-small > div > div > a > span > span:nth-child(2) > span.a-price-fraction", el => el.innerHTML)
+            const url = await page.$eval(item_selector+ " > div:nth-child(1) > div > div > span > a",  el => el.href)
+            console.log("item: " + i)
+            console.log(url)
+            console.log(imageurl)
+            console.log(name)
+            console.log(price_int.replace(/<\/?.+?\/?>/g,"")+price_double)
+            console.log((new Date()).Format("yyyy-MM-dd hh:mm:ss"))
+            itemList.push({
+                "commodityName": name,
+                "url": url,
+                "price": price_int.replace(/<\/?.+?\/?>/g,"")+price_double,
+                "imageUrl":imageurl,
+                "source":"amazon",
+                "price_date":(new Date()).Format("yyyy-MM-dd hh:mm:ss")
+        })
         }
-        console.log("cookie success")
-        print(cookies)
+        catch (e) {
+            console.error(e)
+        }
     }
-    catch (err){
-        console.log("cookie error")
-        return page
+    return itemList
+}
+
+async function jd_search(query, num){
+    let page = await jdPage
+
+    let searchSelector = "#key"
+    await page.click(searchSelector)
+
+    await page.keyboard.down('ControlLeft')
+    await page.keyboard.down('a')
+    await page.keyboard.press('Backspace')
+    await page.keyboard.up('a')
+    await page.keyboard.up('ControlLeft')
+
+    await page.keyboard.type(query)
+    let querySelector = "#search > div > div.form > button"
+    const navigationPromise = page.waitForNavigation();
+    try {await page.click(querySelector)}
+    catch (e){
+        await page.click("#search-2014 > div > button")
     }
+    finally {
+        await navigationPromise
+
+        let item_selector_temp = "#J_goodsList > ul > li:nth-child({})"
+        let i = 1
+        let itemList = []
+        for (i; i <= num; i++) {
+            let item_selector = format(item_selector_temp, i)
+
+                const imageurl = await page.$eval(item_selector + " > div > div.p-img > a > img", el => el.src)
+                const price = await page.$eval(item_selector + " > div > div.p-price > strong > i", el => el.innerHTML)
+                const url = await page.$eval(item_selector + " > div > div.p-img > a", el => el.href)
+                console.log("item: " + i)
+                console.log(url)
+                console.log(imageurl)
+                console.log(price)
+                console.log((new Date()).Format("yyyy-MM-dd hh:mm:ss"))
+            try {
+                const name = await page.$eval(item_selector + " > div > div.p-name.p-name-type-2 > a", el => el.title)
+                console.log(name)
+                itemList.push({
+                    "commodityName": name,
+                    "url": url,
+                    "price": price,
+                    "imageUrl": imageurl,
+                    "source": "jd",
+                    "price_date": (new Date()).Format("yyyy-MM-dd hh:mm:ss")
+                })
+            }
+            catch (e) {
+                console.error(e)
+                const name = await page.$eval(item_selector + " > div > div.p-name > a", el => el.title)
+                itemList.push({
+                    "commodityName": name,
+                    "url": url,
+                    "price": price,
+                    "imageUrl": imageurl,
+                    "source": "jd",
+                    "price_date": (new Date()).Format("yyyy-MM-dd hh:mm:ss")
+                })
+            }
+        }
+        return itemList
+    }
+}
 
 app.post('/commodity/search',jsonParser, (req, res) => {
     const query  = req.body.query
     const website = req.body.website
     console.log( 'query: ' + query);
     console.log('website: ' + website);
-
-    let  options = {
-        method: 'get',
-        url: "https://s.taobao.com/search?q="+query,
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-    };
-    run(query)
-    res.sendStatus(200);
+    if(website == "amazon"){
+        amazon_search(query, 5).then(
+            result =>{
+                res.status(200).send(result)
+            }
+        )
+    }
+    else if(website == "jd"){
+        jd_search(query, 5).then(
+            result =>{
+                res.status(200).send(result)
+            }
+        )
+    }
+    else if (website == "all"){
+        amazon_search(query, 5).then(
+            amazon_result =>{
+                jd_search(query, 5).then(
+                    jd_result =>{
+                        res.status(200).send(amazon_result.concat(jd_result))
+                    }
+                )
+            }
+        )
+    }
+    else{
+        res.status(400).send("illegal website option")
+    }
 });
-
-
 
 app.post('/commodity/add', jsonParser, (req, res) => {
     const commodity =
@@ -145,147 +243,33 @@ app.get('/commodity/all', (req, res) => {
     });
 });
 
-
-app.post('/commodity/delete', jsonParser, (req, res) => {
-    commodityModel.deleteOne({_id: req.oid});
-    res.status(200).send({success: true});
-});
-
-app.post('/hooks/create', jsonParser, (req, res) => {
-    const payload = req.body.payload;
-    storeHookId(req.uid).then(hid => { // 存储这个用户的hook信息
-        const hook = {
-            hid: hid,
-            uid: req.uid,
-            name: req.body.name || '',
-            type: req.body.type || '',
-            detail: payload || ''
-        };
-        const hooksEntity = new hooksModel(hook);
-        hooksEntity.save(err => {
-            if (err) {
-                res.sendStatus(400);
-            } else {
-                res.sendStatus(200);
-            }
-        });
-    });
-});
-
-app.post('/hooks/delete', jsonParser, (req, res) => {
-    const hid = req.body.hid;
-    hooksModel.findOne({hid: hid}, 'uid', (err, result) => {
-        if (err) return res.status(400);
-        if (result.uid === req.uid) {
-            hooksModel.deleteOne({hid: hid}, (err, writeOpResult) => {
-                if (err) return res.sendStatus(400);
-                return res.sendStatus(200);
+app.post('/mail', jsonParser, (req, res) => {
+    console.log("mail: " + req.body.mail)
+    console.log("commodityName: " + req.body.commodityName)
+    const mg = require('mailgun-js')({apiKey: config.mailgun.mailgun_apikey, domain: config.mailgun.mailgun_domain})
+    const content = "Dear user: \n" + req.body.commodityName + "(" + req.body.url +") from " + req.body.source + " is on sale."
+    prepareEmailContent(content, req.body.mail).then(
+        result => {
+            console.log(result)
+            mg.messages().send(result, (sendError, body) => {
+                if (sendError) {
+                    res.send('400');
+                } else {
+                    res.send('200');
+                }
             });
-        } else {
-            return res.status(400);
         }
-    });
+    )
 });
 
-/**
- * hook总入口
- * */
-app.post('/h/:hid', jsonParser, (req, res) => {
-    const kind = req.body.kind;
-    const destHid = req.params.hid;
-    switch (kind) {
-        case "slack":
-            transferToSlack(req.body, destHid, res);
-            break;
-        case "wx":
-            sendTemplateMessage(req.body, destHid, res);
-            break;
-        case "email":
-            sendEmail(req.body, destHid, res);
-            break;
-        default:
-            sendTemplateMessage();
-    }
-});
-
-
-app.get('/hooks', (req, res) => {
-    hooksModel.find({'uid': req.uid}, 'hid  name type detail').then(querriedHooks => {
-        const formatted = querriedHooks.map(hooks => {
-            let hook = JSON.parse(JSON.stringify(hooks));
-            let formatted = {};
-            formatted['hid'] = hook.hid;
-            formatted['name'] = hook.name;
-            formatted['type'] = hook.type;
-            formatted['detail'] = hook.detail;
-            return formatted;
-        });
-        res.send(formatted);
-    });
-});
-
-
-async function prepareEmailContent(reqBody, destHid) {
-    const emailDoc = await hooksModel.findOne({'hid': destHid}, 'detail').exec();
+async function prepareEmailContent(content, destMail) {
     return {
         from: `AppetizerIO <noreply@appetizer.io>`,
-        to: [emailDoc.detail], // [user's email address]
-        subject: reqBody.subject,
-        html: reqBody.html || 'none',
+        to: [destMail], // [user's email address]
+        subject: "[Argus] Decrease Notification",
+        html: content  || 'none',
     };
-
 }
-
-async function sendEmail(reqBody, destHid, res) {
-    const mg = require('mailgun-js')({apiKey: config.mailgun.mailgun_apikey, domain: config.mailgun.mailgun_domain});
-    const emailContent = await prepareEmailContent(reqBody, destHid);
-    mg.messages().send(emailContent, (sendError, body) => {
-        if (sendError) {
-            res.send('400');
-        } else {
-            res.send('200');
-        }
-    });
-}
-
-/**
- * 存储hookid和openid的映射
- * */
-async function storeHookId(uid, callback) {
-    let hookid = shortidgenerator.gen();
-    const existedHookid = await hooksModel.findOne({'uid': uid}, 'hid').exec();
-    if (!existedHookid) hookid = shortidgenerator.gen(); //如果hookid重复，在随机产生一次
-    return hookid;
-}
-
-/**
- * 检查是否有hookid
- * **/
-function hasHookId(openid) {
-    return hooksModel.findOne({'openid': openid}, 'hid', (err, hooksModel) => {
-        if (err) {
-            res.status(400);
-        }
-        return hooksModel !== null && hooksModel.hid.length !== 0;
-    });
-}
-
-/**
- * 验证hookid是否合法，是否[A-Za-z0-9]并且长度小于10
- * */
-function isValidHookid(hookid) {
-    // TODO 长度小于10？？
-    return /^[A-Za-z0-9]+$/.test(hookid);
-}
-
-/**
- * 取关后注销hookid
- * */
-async function destroyHooks(openid) {
-    const result = await hooksModel.where('openid', openid).updateMany({$set: {hid: ''}}).exec();
-    return result.hid === '';
-}
-
 
 // catch 404
 app.use(function (err, req, res, next) {
@@ -306,3 +290,4 @@ app.listen(port, function () {
         }
     );
 });
+
