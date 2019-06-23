@@ -28,15 +28,6 @@ module.exports = {
             reconnectInterval: 5000
         }
     },
-    mongoHooksSchema: {
-        hid: String,
-        uid: String,
-        cid: String,
-        name: String,
-        type: String,
-        detail:String
-    },
-
     mongoCommoditySchema: {
         cid: String,
         uid: String,
@@ -48,24 +39,10 @@ module.exports = {
         source: String,
         detail:String
     },
-
-
-
-
     mongoUserSchema: {
         uid: String,
         email: String,
         password: String
-    },
-
-    mongoTokenSchema:{
-        accessToken: String,
-        expires:String,
-        clientID:String,
-        user:{
-            id:String,
-            level:Number
-        }
     },
 
     mongoScriptionSchema:{

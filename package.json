@@ -31,6 +31,7 @@
     "node-webhooks": "^1.4.0",
     "puppeteer": "^1.17.0",
     "sha1": "^1.1.1",
+    "string-format": "^2.0.0",
     "wechat": "^2.1.0",
     "wechat-api": "^1.35.1",
     "xml2js": "latest"
