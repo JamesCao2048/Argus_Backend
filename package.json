@@ -28,6 +28,8 @@
     "mongodb": "^3.1.8",
     "mongoose": "^5.3.10",
     "morgan": "^1.9.1",
+    "newman": "^4.5.1",
+    "newman-reporter-html": "^1.0.3",
     "node-webhooks": "^1.4.0",
     "puppeteer": "^1.17.0",
     "sha1": "^1.1.1",

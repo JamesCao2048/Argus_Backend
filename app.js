@@ -51,7 +51,7 @@ Date.prototype.Format = function(fmt) { //author: meizz
 let amazonPage = get_website_page("https://www.amazon.cn/")
 let jdPage = get_website_page("https://www.jd.com/")
 async function get_website_page(url){
-    const browser = await puppeteer.launch({headless: false})
+    const browser = await puppeteer.launch()
     let page = await browser.newPage()
     //let Page = await browser.newPage()
     await page.goto(url)

@@ -6,6 +6,13 @@ Backend of Argus
 yarn start
 ```
 Then the service could be accessed in `http://localhost:8088`.
+## Test
+Once the service started, you could run 
+```
+node test.js
+``` 
+to test the api, and get the report html in `htmlResults.html` by default.
+
 
 ## commodity
 **Post** /commodity/search
