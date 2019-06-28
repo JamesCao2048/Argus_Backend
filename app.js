@@ -9,6 +9,7 @@
 const express = require('express');
 const format = require('string-format')
 const puppeteer = require('puppeteer');
+const cors = require('cors');
 const CREDS = require("./creds");
 const app = express();
 const config = require('./config.dev');
@@ -32,7 +33,19 @@ const accessLogStream = require('file-stream-rotator').getStream(config.logAddre
 fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);
 process.stdout.write = accessLogStream.write.bind(accessLogStream); // redirect console.log(stdout) to process.stderr
 app.use(morgan('short', {stream: accessLogStream}));
-
+// app.use(cors());
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+    )
+    res.setHeader(
+      'Access-Control-Allow-Methods',
+      'GET, POST, PATCH, DELETE, OPTIONS, PUT'
+    )
+    next()
+  })
 Date.prototype.Format = function(fmt) { //author: meizz
     var o = {
         "M+": this.getMonth() + 1, //月份
