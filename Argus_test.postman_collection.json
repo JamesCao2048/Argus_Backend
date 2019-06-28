@@ -19,7 +19,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"website\":\"amazon\",\n\t\"query\": \"d7200\"\n}"
+					"raw": "{\n\t\"query\": \"d7200\"\n}"
 				},
 				"url": {
 					"raw": "localhost:8088/commodity/search",
@@ -50,7 +50,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"website\":\"amazon\",\n\t\"query\": \"iphone\"\n}"
+					"raw": "{\n\t\"query\": \"iphone\"\n}"
 				},
 				"url": {
 					"raw": "localhost:8088/commodity/search",
@@ -81,7 +81,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"website\":\"amazon\",\n\t\"query\": \"华为\"\n}"
+					"raw": "{\n\t\"query\": \"华为\"\n}"
 				},
 				"url": {
 					"raw": "localhost:8088/commodity/search",
@@ -141,14 +141,14 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"website\":\"jd\",\n\t\"query\": \"iphone\"\n}"
+					"raw": "{\n\t\"query\": \"iphone\"\n}"
 				},
 				"url": {
-					"raw": "localhost:8088/commodity/search",
+					"raw": "localhost:8089/commodity/search",
 					"host": [
 						"localhost"
 					],
-					"port": "8088",
+					"port": "8089",
 					"path": [
 						"commodity",
 						"search"
@@ -171,14 +171,14 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"website\":\"jd\",\n\t\"query\": \"华为\"\n}"
+					"raw": "{\n\t\"query\": \"华为\"\n}"
 				},
 				"url": {
-					"raw": "localhost:8088/commodity/search",
+					"raw": "localhost:8089/commodity/search",
 					"host": [
 						"localhost"
 					],
-					"port": "8088",
+					"port": "8089",
 					"path": [
 						"commodity",
 						"search"
@@ -188,97 +188,7 @@
 			"response": []
 		},
 		{
-			"name": "search_query7",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"name": "Content-Type",
-						"value": "application/json",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"website\":\"all\",\n\t\"query\": \"d7200\"\n}"
-				},
-				"url": {
-					"raw": "localhost:8088/commodity/search",
-					"host": [
-						"localhost"
-					],
-					"port": "8088",
-					"path": [
-						"commodity",
-						"search"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "search_query8",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"name": "Content-Type",
-						"value": "application/json",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"website\":\"all\",\n\t\"query\": \"iphone\"\n}"
-				},
-				"url": {
-					"raw": "localhost:8088/commodity/search",
-					"host": [
-						"localhost"
-					],
-					"port": "8088",
-					"path": [
-						"commodity",
-						"search"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "search_query9",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"name": "Content-Type",
-						"value": "application/json",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"website\":\"all\",\n\t\"query\": \"华为\"\n}"
-				},
-				"url": {
-					"raw": "localhost:8088/commodity/search",
-					"host": [
-						"localhost"
-					],
-					"port": "8088",
-					"path": [
-						"commodity",
-						"search"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "search_query10",
+			"name": "mail",
 			"request": {
 				"method": "POST",
 				"header": [

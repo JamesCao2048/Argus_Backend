@@ -2,12 +2,21 @@
 Backend of Argus
 
 ## Usage
+First of all, run ```yarn install``` to install all the dependencies.
+As microservices architechture has been adopted, you should run
 ```
-yarn start
+node app_mail
 ```
-Then the service could be accessed in `http://localhost:8088`.
+```
+node app_search_amazon
+```
+```
+node app_search_jd
+```
+to start microservices seperately.
+Then services could be accessed in `http://localhost:8087`,`http://localhost:8088`, and `http://localhost:8089`
 ## Test
-Once the service started, you could run 
+Once services are all started, you could run 
 ```
 node test.js
 ``` 
@@ -20,7 +29,6 @@ to test the api, and get the report html in `htmlResults.html` by default.
 根据检索语句，返回购物网站中的相关commodity。
 ```
 {query: "d7200",
-website:"amazon" or "jd" or "all"
 }
 ```
 ```

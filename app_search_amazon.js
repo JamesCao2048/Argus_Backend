@@ -11,7 +11,7 @@ const format = require('string-format')
 const puppeteer = require('puppeteer');
 const cors = require('cors');
 const CREDS = require("./creds");
-const app = express();
+const app_search_amazon = express();
 const config = require('./config.dev');
 const moment = require('moment');
 moment.locale('zh-CN'); // 中文日期
@@ -32,9 +32,9 @@ const accessLogStream = require('file-stream-rotator').getStream(config.logAddre
 
 fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);
 process.stdout.write = accessLogStream.write.bind(accessLogStream); // redirect console.log(stdout) to process.stderr
-app.use(morgan('short', {stream: accessLogStream}));
-// app.use(cors());
-app.use((req, res, next) => {
+app_search_amazon.use(morgan('short', {stream: accessLogStream}));
+// app_search_amazon.use(cors());
+app_search_amazon.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*')
     res.setHeader(
       'Access-Control-Allow-Headers',
@@ -62,7 +62,6 @@ Date.prototype.Format = function(fmt) { //author: meizz
 }
 
 let amazonPage = get_website_page("https://www.amazon.cn/")
-let jdPage = get_website_page("https://www.jd.com/")
 async function get_website_page(url){
     const browser = await puppeteer.launch()
     let page = await browser.newPage()
@@ -123,184 +122,27 @@ async function amazon_search(query, num){
     return itemList
 }
 
-async function jd_search(query, num){
-    let page = await jdPage
-
-    let searchSelector = "#key"
-    await page.click(searchSelector)
-
-    await page.keyboard.down('ControlLeft')
-    await page.keyboard.down('a')
-    await page.keyboard.press('Backspace')
-    await page.keyboard.up('a')
-    await page.keyboard.up('ControlLeft')
-
-    await page.keyboard.type(query)
-    let querySelector = "#search > div > div.form > button"
-    const navigationPromise = page.waitForNavigation();
-    try {await page.click(querySelector)}
-    catch (e){
-        await page.click("#search-2014 > div > button")
-    }
-    finally {
-        await navigationPromise
-
-        let item_selector_temp = "#J_goodsList > ul > li:nth-child({})"
-        let i = 1
-        let itemList = []
-        for (i; i <= num; i++) {
-            let item_selector = format(item_selector_temp, i)
-
-                const imageurl = await page.$eval(item_selector + " > div > div.p-img > a > img", el => el.src)
-                const price = await page.$eval(item_selector + " > div > div.p-price > strong > i", el => el.innerHTML)
-                const url = await page.$eval(item_selector + " > div > div.p-img > a", el => el.href)
-                console.log("item: " + i)
-                console.log(url)
-                console.log(imageurl)
-                console.log(price)
-                console.log((new Date()).Format("yyyy-MM-dd hh:mm:ss"))
-            try {
-                const name = await page.$eval(item_selector + " > div > div.p-name.p-name-type-2 > a", el => el.title)
-                console.log(name)
-                itemList.push({
-                    "commodityName": name,
-                    "url": url,
-                    "price": price,
-                    "imageUrl": imageurl,
-                    "source": "jd",
-                    "price_date": (new Date()).Format("yyyy-MM-dd hh:mm:ss")
-                })
-            }
-            catch (e) {
-                console.error(e)
-                const name = await page.$eval(item_selector + " > div > div.p-name > a", el => el.title)
-                itemList.push({
-                    "commodityName": name,
-                    "url": url,
-                    "price": price,
-                    "imageUrl": imageurl,
-                    "source": "jd",
-                    "price_date": (new Date()).Format("yyyy-MM-dd hh:mm:ss")
-                })
-            }
-        }
-        return itemList
-    }
-}
-
-app.post('/commodity/search',jsonParser, (req, res) => {
+app_search_amazon.post('/commodity/search',jsonParser, (req, res) => {
     const query  = req.body.query
     const website = req.body.website
     console.log( 'query: ' + query);
     console.log('website: ' + website);
-    if(website == "amazon"){
-        amazon_search(query, 5).then(
-            result =>{
-                res.status(200).send(result)
+    amazon_search(query, 5).then(
+        result =>{
+            res.status(200).send(result)
             }
         )
-    }
-    else if(website == "jd"){
-        jd_search(query, 5).then(
-            result =>{
-                res.status(200).send(result)
-            }
-        )
-    }
-    else if (website == "all"){
-        amazon_search(query, 5).then(
-            amazon_result =>{
-                jd_search(query, 5).then(
-                    jd_result =>{
-                        res.status(200).send(amazon_result.concat(jd_result))
-                    }
-                )
-            }
-        )
-    }
-    else{
-        res.status(400).send("illegal website option")
-    }
 });
-
-app.post('/commodity/add', jsonParser, (req, res) => {
-    const commodity =
-        {
-            uid: req.uid,
-            commodityName: req.body.commodityName,
-            source: req.body.source
-        };
-    const commodityEntity = new commodityModel(commodity);
-    commodityEntity.save(err => {
-        if (err) {
-            res.sendStatus(400);
-        } else {
-            res.sendStatus(200);
-        }
-    });
-});
-
-app.get('/commodity/all', (req, res) => {
-    console.log(req.uid + ' uid');
-    commodityModel.find({'uid': req.uid}, '_id commodityName source', (err, commodities) => {
-        if (err) return console.log(err);
-        const result = commodities.map(commodity => {
-            let commodityjson = JSON.parse(JSON.stringify(commodity));
-            let formatted = {};
-            formatted['id'] = commodityjson._id;
-            formatted['commodityName'] = commodityjson.commodityName;
-            formatted['source'] = commodityjson.source;
-            return formatted;
-        });
-        res.status(200).send(result);
-    });
-});
-
-app.post('/mail', jsonParser, (req, res) => {
-    console.log("mail: " + req.body.mail)
-    console.log("commodityName: " + req.body.commodityName)
-    const mg = require('mailgun-js')({apiKey: config.mailgun.mailgun_apikey, domain: config.mailgun.mailgun_domain})
-    const content = "Dear user: \n" + req.body.commodityName + "(" + req.body.url +") from " + req.body.source + " is on sale."
-    prepareEmailContent(content, req.body.mail).then(
-        result => {
-            console.log(result)
-            mg.messages().send(result, (sendError, body) => {
-                if (sendError) {
-                    res.send('400');
-                } else {
-                    res.send('200');
-                }
-            });
-        }
-    )
-});
-
-async function prepareEmailContent(content, destMail) {
-    return {
-        from: `AppetizerIO <noreply@appetizer.io>`,
-        to: [destMail], // [user's email address]
-        subject: "[Argus] Decrease Notification",
-        html: content  || 'none',
-    };
-}
 
 // catch 404
-app.use(function (err, req, res, next) {
+app_search_amazon.use(function (err, req, res, next) {
     next(err);
     res.status(400).end();
 });
 
 // entry point
 const port = +process.argv[2] || 8088;
-app.listen(port, function () {
+app_search_amazon.listen(port, function () {
     console.log('unified-notifier listening on port ' + port);
-    mongoose.connect(config.mongoose.connect.url, config.mongoose.options).then(
-        () => {
-            console.log("数据库连接成功");
-        },
-        err => {
-            console.log("数据库连接失败:", err);
-        }
-    );
 });
 
