@@ -17,7 +17,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "body-parser": "^1.18.3",
-    "body-parser-xml": "^1.1.0",
+    "body-parser-xml": "^2.0.3",
     "cors": "^2.8.5",
     "debug": "^3.1.0",
     "dom-parser": "0.1.6",
