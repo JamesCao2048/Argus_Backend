@@ -25,7 +25,7 @@
     "file-stream-rotator": "^0.4.1",
     "js-shortid": "^0.1.1",
     "mailgun-js": "^0.21.0",
-    "moment": "^2.22.2",
+    "moment": "^2.29.4",
     "mongodb": "^3.1.8",
     "mongoose": "^5.3.10",
     "morgan": "^1.9.1",
