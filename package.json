@@ -21,7 +21,7 @@
     "cors": "^2.8.5",
     "debug": "^3.1.0",
     "dom-parser": "0.1.6",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "file-stream-rotator": "^0.4.1",
     "js-shortid": "^0.1.1",
     "mailgun-js": "^0.21.0",
